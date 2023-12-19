@@ -1,45 +1,116 @@
+const { json } = require('body-parser');
 const express = require('express');
 const app = express();
+const cors = require('cors');
 app.use(express.json());
-const courses = [
-    {id: 1, name: "NodeJS"},
+app.use(cors());
+
+
+function CheckAuthorize(req){
+  const apiKey = req.header('x-api-key');
+  if (!apiKey || apiKey != "hello"){
+    res.send(JSON.stringify({
+      success: false,
+      message: "Unauthorized access!"
+    }))
+  }
+}
+
+const employees = [
+    {id: 1, name: "Khanh"},
     {id: 2, name: "khanhdnk"},
-    { id: 3, name: "Python" },
-    { id: 4, name: "Java" },
-    { id: 5, name: "Oac" },
+    { id: 3, name: "Minh" },
+    { id: 4, name: "Thang" },
+    { id: 5, name: "travis" },
     { id: 6, name: "DNK" },
     { id: 7, name: "TestResult" },
     { id: 8, name: "Jira" }
 ]
 
 app.get('/', (req, res) => {
-  res.send('You are...');
+  CheckAuthorize(req)
+  res.send(JSON.stringify({
+    success: true,
+    message: "Authorized access"
+  }));
+    
+  
+
+  // const uuid = require('uuid');
+  // return uuid.v4();
 });
 
+//get all employees
+app.get('/api/employees', (req, res) => {
+  CheckAuthorize(req)
 
-app.get('/api/courses', (req, res) => {
-  res.send(courses);
+  res.send(employees);
 });
 
-app.get('/api/courses/:id', (req, res) => {
-  const theCourse = courses.find(course => course.id == req.params.id);
-  if (!theCourse) {
+//get specific employee
+app.get('/api/employees/:id', (req, res) => {
+  CheckAuthorize(req)
+
+  const theEmployee = employees.find(course => course.id === parseInt(req.params.id));
+  if (!theEmployee) {
     res.status(404).send('Not exist');
   }
-  res.send(theCourse);
+  res.send(JSON.stringify({
+    id: theEmployee.id,
+    name: theEmployee.name
+  }));
 });
 
-app.post('/api/courses/add', (req, res) => {
+//add employee
+app.post('/api/employees/add', (req, res) => {
+  CheckAuthorize(req)
+
   const course = {
     id: req.body.id,
     name: req.body.name,
   }
-  courses.push(course);
+  employees.push(course);
   res.send(JSON.stringify({
     success: true,
     notice: "Added successfully",
-    data: courses
+    data: employees
   }));
+});
+
+//update a employee
+
+app.put('/api/employees/edit/:id',  (req, res) => {
+  CheckAuthorize(req)
+
+  const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
+  if (!theEmployee){
+    res.status(404).send("Not exist");
+  }
+
+  theEmployee.name = req.body.name;
+  res.send(JSON.stringify({
+    success: true,
+    notice: "successfully",
+    data: employees
+  }));
+});
+
+
+
+//delete the employee
+app.delete('/api/employees/delete/:id', (req, res) => {
+  CheckAuthorize(req)
+
+  const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
+  if (!theEmployee){
+    res.status(404).send("Not exist");
+  }
+  employees.splice(employees.indexOf(theEmployee), 1);
+  res.send(JSON.stringify({
+    success: true,
+    notice: "Deleted successfully",
+    data: employees
+  }))
 });
 
 // const server = http.createServer((req, res) => {
