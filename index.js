@@ -43,7 +43,10 @@ app.get('/', (req, res) => {
 app.get('/api/employees', (req, res) => {
   CheckAuthorize(req)
 
-  res.send(employees);
+  res.send(JSON.stringify({
+    success: true,
+    data: employees
+  }));
 });
 
 //get specific employee
@@ -55,8 +58,12 @@ app.get('/api/employees/:id', (req, res) => {
     res.status(404).send('Not exist');
   }
   res.send(JSON.stringify({
-    id: theEmployee.id,
-    name: theEmployee.name
+    success: true,
+    data:{
+      id: theEmployee.id,
+      name: theEmployee.name
+    }
+    
   }));
 });
 
@@ -65,14 +72,13 @@ app.post('/api/employees/add', (req, res) => {
   CheckAuthorize(req)
 
   const course = {
-    id: req.body.id,
+    id: parseInt(req.body.id),
     name: req.body.name,
   }
   employees.push(course);
   res.send(JSON.stringify({
     success: true,
     notice: "Added successfully",
-    data: employees
   }));
 });
 
@@ -90,7 +96,6 @@ app.put('/api/employees/edit/:id',  (req, res) => {
   res.send(JSON.stringify({
     success: true,
     notice: "successfully",
-    data: employees
   }));
 });
 
@@ -108,7 +113,6 @@ app.delete('/api/employees/delete/:id', (req, res) => {
   res.send(JSON.stringify({
     success: true,
     notice: "Deleted successfully",
-    data: employees
   }))
 });
 
