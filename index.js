@@ -45,7 +45,9 @@ app.get('/api/employees', (req, res) => {
 
   res.send(JSON.stringify({
     success: true,
-    data: employees
+    data: employees,
+    notice: "Successfully"
+
   }));
 });
 
@@ -62,7 +64,8 @@ app.get('/api/employees/:id', (req, res) => {
     data:{
       id: theEmployee.id,
       name: theEmployee.name
-    }
+    },
+    notice: "Successfully"
     
   }));
 });
