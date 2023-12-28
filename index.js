@@ -118,20 +118,5 @@ app.delete('/api/employees/delete/:id', (req, res) => {
     notice: "Deleted successfully",
   }))
 });
-
-app.get
-
-// const server = http.createServer((req, res) => {
-//   res.setHeader('Content-type', 'application/json')
-//   res.writeHeader(404, {
-//     'Content-type' : 'application/json',
-//     'X-Powered-By' : 'Node.js'
-//   })
-//   res.end(JSON.stringify({
-//     success: false,
-//     error: "Not Found",
-//     data: null
-//   }))
-// });
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
