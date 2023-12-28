@@ -16,6 +16,10 @@ function CheckAuthorize(req){
   }
 }
 
+const employeesLoginInfor = [
+  {userName: "admin", password: "admin"}
+]
+
 const employees = [
     {id: 1, name: "Khanh"},
     {id: 2, name: "khanhdnk"},
@@ -118,5 +122,21 @@ app.delete('/api/employees/delete/:id', (req, res) => {
     notice: "Deleted successfully",
   }))
 });
+
+app.post('/api/login', (req,res) => {
+  CheckAuthorize(req);
+  //.json body??
+  const userName = req.body.userName;
+  const password = req.body.password;
+  const employeeLogin = employeesLoginInfor.find(userLoginInfor => userLoginInfor.userName === (userName) && userLoginInfor.password === (password));
+  if (!employeeLogin){
+    res.status(404).send("Not exist");
+  }
+  res.send(JSON.stringify({
+    success: true,
+    notice: "login successfully",
+    data: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkRhbmcgTmFtIEtoYW5oIiwiaWF0IjoxNTE2MjM5MDIyfQ.z3VMWszAfZe0qJcUOGWIsUq3S9dY3ohMDiGSn-SS-Us"
+  }))
+})
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
