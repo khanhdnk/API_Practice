@@ -119,6 +119,8 @@ app.delete('/api/employees/delete/:id', (req, res) => {
   }))
 });
 
+app.get
+
 // const server = http.createServer((req, res) => {
 //   res.setHeader('Content-type', 'application/json')
 //   res.writeHeader(404, {
