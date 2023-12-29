@@ -1,9 +1,12 @@
+require('dotenv').config();
 const { json } = require('body-parser');
 const express = require('express');
-const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
+const app = express();
 app.use(express.json());
 app.use(cors());
+
 
 
 function CheckAuthorize(req){
@@ -44,7 +47,7 @@ app.get('/', (req, res) => {
 });
 
 //get all employees
-app.get('/api/employees', (req, res) => {
+app.get('/api/employees', authenticateToken,(req, res) => {
   CheckAuthorize(req)
 
   res.send(JSON.stringify({
@@ -123,20 +126,37 @@ app.delete('/api/employees/delete/:id', (req, res) => {
   }))
 });
 
+
+//login
 app.post('/api/login', (req,res) => {
   CheckAuthorize(req);
-  //.json body??
+  // //.json body??
   const userName = req.body.userName;
-  const password = req.body.password;
-  const employeeLogin = employeesLoginInfor.find(userLoginInfor => userLoginInfor.userName === (userName) && userLoginInfor.password === (password));
-  if (!employeeLogin){
-    res.status(404).send("Not exist");
-  }
+  // const password = req.body.password;
+  const user = {name: userName};
+  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+  // const employeeLogin = employeesLoginInfor.find(userLoginInfor => userLoginInfor.userName === (userName) && userLoginInfor.password === (password));
+  // if (!employeeLogin){
+  //   res.status(404).send("Not exist");
+  // }
+
   res.send(JSON.stringify({
     success: true,
     notice: "login successfully",
-    data: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkRhbmcgTmFtIEtoYW5oIiwiaWF0IjoxNTE2MjM5MDIyfQ.z3VMWszAfZe0qJcUOGWIsUq3S9dY3ohMDiGSn-SS-Us"
+    data: accessToken
   }))
 })
+
+function authenticateToken(req, res, next){
+  const authHeader = req.headers['authorization'];
+  console.log(authHeader);
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == undefined) return res.sendStatus(401);
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403)
+    req.user = user;
+    next();
+  })
+}
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
