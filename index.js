@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken')
 const app = express();
 app.use(express.json());
 app.use(cors());
+const timeToAlive = 15;
 
 
 
@@ -134,7 +135,8 @@ app.post('/api/login', (req,res) => {
   const userName = req.body.userName;
   // const password = req.body.password;
   const user = {name: userName};
-  const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
   // const employeeLogin = employeesLoginInfor.find(userLoginInfor => userLoginInfor.userName === (userName) && userLoginInfor.password === (password));
   // if (!employeeLogin){
   //   res.status(404).send("Not exist");
@@ -143,7 +145,8 @@ app.post('/api/login', (req,res) => {
   res.send(JSON.stringify({
     success: true,
     notice: "login successfully",
-    data: accessToken
+    token: accessToken,
+    refreshToken: refreshToken
   }))
 })
 
@@ -157,6 +160,14 @@ function authenticateToken(req, res, next){
     req.user = user;
     next();
   })
+}
+
+function generateAccessToken(user){
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: `${timeToAlive}s`});
+}
+
+function generateRefreshToken(user){
+  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
 }
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
