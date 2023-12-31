@@ -10,7 +10,7 @@ const timeToAlive = 15;
 
 
 
-function CheckAuthorize(req){
+function CheckAuthorize(req, res){
   const apiKey = req.header('x-api-key');
   if (!apiKey || apiKey != "hello"){
     res.send(JSON.stringify({
@@ -36,7 +36,7 @@ const employees = [
 ]
 
 app.get('/', (req, res) => {
-  CheckAuthorize(req)
+  CheckAuthorize(req, res)
   res.send(JSON.stringify({
     success: true,
     message: "Authorized access"
@@ -49,7 +49,7 @@ app.get('/', (req, res) => {
 
 //get all employees
 app.get('/api/employees', authenticateToken,(req, res) => {
-  CheckAuthorize(req)
+  CheckAuthorize(req, res)
 
   res.send(JSON.stringify({
     success: true,
@@ -61,11 +61,12 @@ app.get('/api/employees', authenticateToken,(req, res) => {
 
 //get specific employee
 app.get('/api/employees/:id', (req, res) => {
-  CheckAuthorize(req)
+  CheckAuthorize(req, res)
 
   const theEmployee = employees.find(course => course.id === parseInt(req.params.id));
   if (!theEmployee) {
     res.status(404).send('Not exist');
+    return;
   }
   res.send(JSON.stringify({
     success: true,
@@ -80,7 +81,7 @@ app.get('/api/employees/:id', (req, res) => {
 
 //add employee
 app.post('/api/employees/add', (req, res) => {
-  CheckAuthorize(req)
+  CheckAuthorize(req, res)
 
   const course = {
     id: parseInt(req.body.id),
@@ -96,11 +97,12 @@ app.post('/api/employees/add', (req, res) => {
 //update a employee
 
 app.put('/api/employees/edit/:id',  (req, res) => {
-  CheckAuthorize(req)
+  CheckAuthorize(req, res)
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
   if (!theEmployee){
     res.status(404).send("Not exist");
+    return;
   }
 
   theEmployee.name = req.body.name;
@@ -114,11 +116,12 @@ app.put('/api/employees/edit/:id',  (req, res) => {
 
 //delete the employee
 app.delete('/api/employees/delete/:id', (req, res) => {
-  CheckAuthorize(req)
+  CheckAuthorize(req, res)
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
   if (!theEmployee){
     res.status(404).send("Not exist");
+    return;
   }
   employees.splice(employees.indexOf(theEmployee), 1);
   res.send(JSON.stringify({
@@ -130,7 +133,7 @@ app.delete('/api/employees/delete/:id', (req, res) => {
 
 //login
 app.post('/api/login', (req,res) => {
-  CheckAuthorize(req);
+  CheckAuthorize(req, res);
   // //.json body??
   const userName = req.body.userName;
   // const password = req.body.password;
@@ -150,9 +153,32 @@ app.post('/api/login', (req,res) => {
   }))
 })
 
+app.post('/api/token', authenticateRefreshToken, (req, res) => {
+  CheckAuthorize(req, res);
+  const userName = req.body.userName;
+  const user = {name: userName};
+
+  res.send(JSON.stringify({
+    success: true,
+    notice: "Successfully get new access token",
+    data: generateAccessToken(user)
+  }))
+})
+
 function authenticateToken(req, res, next){
   const authHeader = req.headers['authorization'];
   console.log(authHeader);
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == undefined) return res.sendStatus(401);
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403)
+    req.user = user;
+    next();
+  })
+}
+
+function authenticateRefreshToken(req, res, next){
+  const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (token == undefined) return res.sendStatus(401);
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
@@ -166,8 +192,9 @@ function generateAccessToken(user){
   return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: `${timeToAlive}s`});
 }
 
+
 function generateRefreshToken(user){
-  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET);
+  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '2h'});
 }
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
