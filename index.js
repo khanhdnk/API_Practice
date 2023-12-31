@@ -24,6 +24,7 @@ const employeesLoginInfor = [
   {userName: "admin", password: "admin"}
 ]
 
+
 const employees = [
     {id: 1, name: "Khanh"},
     {id: 2, name: "khanhdnk"},
@@ -34,6 +35,8 @@ const employees = [
     { id: 7, name: "TestResult" },
     { id: 8, name: "Jira" }
 ]
+
+const refreshTokenDatabase = [];
 
 app.get('/', (req, res) => {
   CheckAuthorize(req, res)
@@ -153,6 +156,20 @@ app.post('/api/login', (req,res) => {
   }))
 })
 
+app.post('/api/logout', (req, res) => {
+  CheckAuthorize(req);
+
+  const refreshToken = req.headers['authorization'];
+  if (refreshToken){
+    refreshTokenDatabase.find(token => refreshToken == token);
+  }
+  res.send(JSON.stringify({
+    success: true,
+    notice: "Successfully logout",
+  }))
+
+})
+
 app.post('/api/token', authenticateRefreshToken, (req, res) => {
   CheckAuthorize(req, res);
   const userName = req.body.userName;
@@ -164,6 +181,53 @@ app.post('/api/token', authenticateRefreshToken, (req, res) => {
     data: generateAccessToken(user)
   }))
 })
+
+app.post('/api/checkAccessToken', authenticateToken, (req, res) => {
+  CheckAuthorize(req, res);
+
+  res.send(JSON.stringify({
+    success: true,
+    notice: "Legit access token"
+  }))
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function authenticateToken(req, res, next){
   const authHeader = req.headers['authorization'];
@@ -194,7 +258,10 @@ function generateAccessToken(user){
 
 
 function generateRefreshToken(user){
-  return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '2h'});
+  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '2h'});
+  refreshTokenDatabase.push(refreshToken);
+  return refreshToken;
+
 }
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
