@@ -243,7 +243,7 @@ function generateAccessToken(user){
 
 
 function generateRefreshToken(user){
-  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '15s'});
+  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '30m'});
   refreshTokenDatabase.push(refreshToken);
   return refreshToken;
 
