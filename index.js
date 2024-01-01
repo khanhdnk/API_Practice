@@ -25,7 +25,7 @@ const employeesLoginInfor = [
 ]
 
 
-const employees = [
+let employees = [
     {id: 1, name: "Khanh"},
     {id: 2, name: "khanhdnk"},
     { id: 3, name: "Minh" },
@@ -36,7 +36,7 @@ const employees = [
     { id: 8, name: "Jira" }
 ]
 
-const refreshTokenDatabase = [];
+let refreshTokenDatabase = [];
 
 app.get('/', (req, res) => {
   CheckAuthorize(req, res)
@@ -161,7 +161,7 @@ app.post('/api/logout', (req, res) => {
 
   const refreshToken = req.headers['authorization'];
   if (refreshToken){
-    refreshTokenDatabase.find(token => refreshToken == token);
+    refreshTokenDatabase = refreshTokenDatabase.filter(token => refreshToken !== token);
   }
   res.send(JSON.stringify({
     success: true,
@@ -231,7 +231,6 @@ app.post('/api/checkAccessToken', authenticateToken, (req, res) => {
 
 function authenticateToken(req, res, next){
   const authHeader = req.headers['authorization'];
-  console.log(authHeader);
   const token = authHeader && authHeader.split(' ')[1];
   if (token == undefined) return res.sendStatus(401);
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
@@ -264,4 +263,5 @@ function generateRefreshToken(user){
 
 }
 const PORT = process.env.PORT || 3001;
+
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
