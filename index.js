@@ -8,18 +8,6 @@ app.use(express.json());
 app.use(cors());
 const timeToAlive = 15;
 
-
-
-function CheckAuthorize(req, res){
-  const apiKey = req.header('x-api-key');
-  if (!apiKey || apiKey != "hello"){
-    res.send(JSON.stringify({
-      success: false,
-      message: "Unauthorized access!"
-    }))
-  }
-}
-
 const employeesLoginInfor = [
   {userName: "admin", password: "admin"}
 ]
@@ -39,7 +27,7 @@ let employees = [
 let refreshTokenDatabase = [];
 
 app.get('/', (req, res) => {
-  CheckAuthorize(req, res)
+  
   res.send(JSON.stringify({
     success: true,
     message: "Authorized access"
@@ -52,7 +40,7 @@ app.get('/', (req, res) => {
 
 //get all employees
 app.get('/api/employees', authenticateToken,(req, res) => {
-  CheckAuthorize(req, res)
+  
 
   res.send(JSON.stringify({
     success: true,
@@ -64,7 +52,7 @@ app.get('/api/employees', authenticateToken,(req, res) => {
 
 //get specific employee
 app.get('/api/employees/:id', (req, res) => {
-  CheckAuthorize(req, res)
+  
 
   const theEmployee = employees.find(course => course.id === parseInt(req.params.id));
   if (!theEmployee) {
@@ -84,7 +72,7 @@ app.get('/api/employees/:id', (req, res) => {
 
 //add employee
 app.post('/api/employees/add', (req, res) => {
-  CheckAuthorize(req, res)
+  
 
   const course = {
     id: parseInt(req.body.id),
@@ -100,7 +88,7 @@ app.post('/api/employees/add', (req, res) => {
 //update a employee
 
 app.put('/api/employees/edit/:id',  (req, res) => {
-  CheckAuthorize(req, res)
+  
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
   if (!theEmployee){
@@ -119,7 +107,7 @@ app.put('/api/employees/edit/:id',  (req, res) => {
 
 //delete the employee
 app.delete('/api/employees/delete/:id', (req, res) => {
-  CheckAuthorize(req, res)
+  
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
   if (!theEmployee){
@@ -136,8 +124,6 @@ app.delete('/api/employees/delete/:id', (req, res) => {
 
 //login
 app.post('/api/login', (req,res) => {
-  CheckAuthorize(req, res);
-  // //.json body??
   const userName = req.body.userName;
   // const password = req.body.password;
   const user = {name: userName};
@@ -157,7 +143,6 @@ app.post('/api/login', (req,res) => {
 })
 
 app.post('/api/logout', (req, res) => {
-  CheckAuthorize(req);
 
   const refreshToken = req.headers['authorization'];
   if (refreshToken){
@@ -171,7 +156,6 @@ app.post('/api/logout', (req, res) => {
 })
 
 app.post('/api/token', authenticateRefreshToken, (req, res) => {
-  CheckAuthorize(req, res);
   const userName = req.body.userName;
   const user = {name: userName};
 
@@ -183,7 +167,6 @@ app.post('/api/token', authenticateRefreshToken, (req, res) => {
 })
 
 app.post('/api/checkAccessToken', authenticateToken, (req, res) => {
-  CheckAuthorize(req, res);
 
   res.send(JSON.stringify({
     success: true,
@@ -191,6 +174,13 @@ app.post('/api/checkAccessToken', authenticateToken, (req, res) => {
   }))
 })
 
+app.post('/api/checkRefreshToken', authenticateRefreshToken, (req, res) => {
+
+  res.send(JSON.stringify({
+    success: true,
+    notice: "Legit refresh token"
+  }))
+})
 
 
 
