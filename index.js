@@ -26,18 +26,6 @@ let employees = [
 
 let refreshTokenDatabase = [];
 
-app.get('/', (req, res) => {
-  
-  res.send(JSON.stringify({
-    success: true,
-    message: "Authorized access"
-  }));
-    
-  
-  // const uuid = require('uuid');
-  // return uuid.v4();
-});
-
 //get all employees
 app.get('/api/employees', authenticateToken,(req, res) => {
   
@@ -51,7 +39,7 @@ app.get('/api/employees', authenticateToken,(req, res) => {
 });
 
 //get specific employee
-app.get('/api/employees/:id', (req, res) => {
+app.get('/api/employees/:id', authenticateToken, (req, res) => {
   
 
   const theEmployee = employees.find(course => course.id === parseInt(req.params.id));
@@ -71,7 +59,7 @@ app.get('/api/employees/:id', (req, res) => {
 });
 
 //add employee
-app.post('/api/employees/add', (req, res) => {
+app.post('/api/employees/add', authenticateToken, (req, res) => {
   
 
   const course = {
@@ -87,7 +75,7 @@ app.post('/api/employees/add', (req, res) => {
 
 //update a employee
 
-app.put('/api/employees/edit/:id',  (req, res) => {
+app.put('/api/employees/edit/:id', authenticateToken,  (req, res) => {
   
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
@@ -106,7 +94,7 @@ app.put('/api/employees/edit/:id',  (req, res) => {
 
 
 //delete the employee
-app.delete('/api/employees/delete/:id', (req, res) => {
+app.delete('/api/employees/delete/:id', authenticateToken, (req, res) => {
   
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
@@ -125,21 +113,29 @@ app.delete('/api/employees/delete/:id', (req, res) => {
 //login
 app.post('/api/login', (req,res) => {
   const userName = req.body.userName;
-  // const password = req.body.password;
-  const user = {name: userName};
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
-  // const employeeLogin = employeesLoginInfor.find(userLoginInfor => userLoginInfor.userName === (userName) && userLoginInfor.password === (password));
-  // if (!employeeLogin){
-  //   res.status(404).send("Not exist");
+  const password = req.body.password;
+  let matchResult
+  // for (const userAuthentication of employeesLoginInfor){
+  //   if (userAuthentication.userName == userName && userAuthentication.password == password)
   // }
+  const matchedEmployee = employeesLoginInfor.find(employee => {
+    return employee.userName === userName && employee.password === password;
+  });
+  if (matchedEmployee){
+    const user = {name: userName};
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-  res.send(JSON.stringify({
-    success: true,
-    notice: "login successfully",
-    token: accessToken,
-    refreshToken: refreshToken
-  }))
+    res.send(JSON.stringify({
+      success: true,
+      notice: "login successfully",
+      token: accessToken,
+      refreshToken: refreshToken
+    }))
+  }else{
+      res.status(401).send("no");
+  }
+
 })
 
 app.post('/api/logout', (req, res) => {
@@ -247,7 +243,7 @@ function generateAccessToken(user){
 
 
 function generateRefreshToken(user){
-  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '2h'});
+  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '15s'});
   refreshTokenDatabase.push(refreshToken);
   return refreshToken;
 
