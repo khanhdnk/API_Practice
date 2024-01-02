@@ -4,13 +4,39 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
 const app = express();
+const cookieParser = require('cookie-parser');
 app.use(express.json());
 app.use(cors());
-const timeToAlive = 15;
+
+app.use(cookieParser());
+const timeToAlive = 150;
 
 const employeesLoginInfor = [
   {userName: "admin", password: "admin"}
 ]
+// const { dayToMilisecond, hourToMilisecond, minToMilisecond, secondToMilisecond } = require('./milisecondGenerator.js');
+
+function dayToMilisecond(day){
+  return day * 24 * 60 * 60 * 1000;
+}
+
+function hourToMilisecond(hour){
+  return hour * 60 * 60 * 1000;
+}
+
+function minToMilisecond(min){
+  return min * 60 * 1000;
+}
+
+function secondToMilisecond(sec){
+  return sec * 1000;
+}
+
+
+
+
+
+
 
 
 let employees = [
@@ -114,10 +140,6 @@ app.delete('/api/employees/delete/:id', authenticateToken, (req, res) => {
 app.post('/api/login', (req,res) => {
   const userName = req.body.userName;
   const password = req.body.password;
-  let matchResult
-  // for (const userAuthentication of employeesLoginInfor){
-  //   if (userAuthentication.userName == userName && userAuthentication.password == password)
-  // }
   const matchedEmployee = employeesLoginInfor.find(employee => {
     return employee.userName === userName && employee.password === password;
   });
@@ -125,7 +147,8 @@ app.post('/api/login', (req,res) => {
     const user = {name: userName};
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-
+    res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: minToMilisecond(7) });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: dayToMilisecond(1) });
     res.send(JSON.stringify({
       success: true,
       notice: "login successfully",
@@ -217,10 +240,14 @@ app.post('/api/checkRefreshToken', authenticateRefreshToken, (req, res) => {
 
 
 function authenticateToken(req, res, next){
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (token == undefined) return res.sendStatus(401);
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+  // const authHeader = req.headers['authorization'];
+  // const token = authHeader && authHeader.split(' ')[1];
+  // if (token == undefined) return res.sendStatus(401);
+  const accessToken = req.cookies.token;
+  const refreshToken = req.cookies.refreshToken;
+  console.log(accessToken)
+  
+  jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
     if (err) return res.sendStatus(403)
     req.user = user;
     next();
