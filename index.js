@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use(cookieParser());
-const timeToAlive = 150;
+const timeToAlive = 10;
 
 const employeesLoginInfor = [
   {userName: "admin", password: "admin"}
@@ -59,7 +59,7 @@ app.get('/api/employees', authenticateToken,(req, res) => {
   res.send(JSON.stringify({
     success: true,
     data: employees,
-    notice: "Successfully"
+    notice: "Successfully good api"
 
   }));
 });
@@ -243,7 +243,7 @@ function authenticateToken(req, res, next){
   // const authHeader = req.headers['authorization'];
   // const token = authHeader && authHeader.split(' ')[1];
   // if (token == undefined) return res.sendStatus(401);
-  const accessToken = req.cookies.token;
+  const accessToken = req.cookies.accessToken;
   const refreshToken = req.cookies.refreshToken;
   console.log(accessToken)
   
