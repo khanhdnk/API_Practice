@@ -6,10 +6,13 @@ const jwt = require('jsonwebtoken')
 const app = express();
 const cookieParser = require('cookie-parser');
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+
 
 app.use(cookieParser());
-const timeToAlive = 10;
+const timeToAlive = 15;
+const aliveTimeRefreshToken = 30;
 
 const employeesLoginInfor = [
   {userName: "admin", password: "admin"}
@@ -53,7 +56,7 @@ let employees = [
 let refreshTokenDatabase = [];
 
 //get all employees
-app.get('/api/employees', authenticateToken,(req, res) => {
+app.get('/api/employees', checkToken,(req, res) => {
   
 
   res.send(JSON.stringify({
@@ -65,7 +68,7 @@ app.get('/api/employees', authenticateToken,(req, res) => {
 });
 
 //get specific employee
-app.get('/api/employees/:id', authenticateToken, (req, res) => {
+app.get('/api/employees/:id', (req, res) => {
   
 
   const theEmployee = employees.find(course => course.id === parseInt(req.params.id));
@@ -85,7 +88,7 @@ app.get('/api/employees/:id', authenticateToken, (req, res) => {
 });
 
 //add employee
-app.post('/api/employees/add', authenticateToken, (req, res) => {
+app.post('/api/employees/add', (req, res) => {
   
 
   const course = {
@@ -101,7 +104,7 @@ app.post('/api/employees/add', authenticateToken, (req, res) => {
 
 //update a employee
 
-app.put('/api/employees/edit/:id', authenticateToken,  (req, res) => {
+app.put('/api/employees/edit/:id',  (req, res) => {
   
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
@@ -120,7 +123,7 @@ app.put('/api/employees/edit/:id', authenticateToken,  (req, res) => {
 
 
 //delete the employee
-app.delete('/api/employees/delete/:id', authenticateToken, (req, res) => {
+app.delete('/api/employees/delete/:id', (req, res) => {
   
 
   const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
@@ -147,8 +150,8 @@ app.post('/api/login', (req,res) => {
     const user = {name: userName};
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: minToMilisecond(7) });
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: dayToMilisecond(1) });
+    res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: minToMilisecond(30), sameSite: 'None', secure: true });
     res.send(JSON.stringify({
       success: true,
       notice: "login successfully",
@@ -162,9 +165,11 @@ app.post('/api/login', (req,res) => {
 })
 
 app.post('/api/logout', (req, res) => {
-
-  const refreshToken = req.headers['authorization'];
+  const refreshToken = req.cookies.refreshToken;
+  console.log(refreshToken)
+  console.log(refreshTokenDatabase)
   if (refreshToken){
+    console.log("found");
     refreshTokenDatabase = refreshTokenDatabase.filter(token => refreshToken !== token);
   }
   res.send(JSON.stringify({
@@ -174,18 +179,8 @@ app.post('/api/logout', (req, res) => {
 
 })
 
-app.post('/api/token', authenticateRefreshToken, (req, res) => {
-  const userName = req.body.userName;
-  const user = {name: userName};
 
-  res.send(JSON.stringify({
-    success: true,
-    notice: "Successfully get new access token",
-    data: generateAccessToken(user)
-  }))
-})
-
-app.post('/api/checkAccessToken', authenticateToken, (req, res) => {
+app.post('/api/checkToken', checkToken, (req, res) => {
 
   res.send(JSON.stringify({
     success: true,
@@ -193,7 +188,7 @@ app.post('/api/checkAccessToken', authenticateToken, (req, res) => {
   }))
 })
 
-app.post('/api/checkRefreshToken', authenticateRefreshToken, (req, res) => {
+app.post('/api/checkRefreshToken', (req, res) => {
 
   res.send(JSON.stringify({
     success: true,
@@ -238,43 +233,61 @@ app.post('/api/checkRefreshToken', authenticateRefreshToken, (req, res) => {
 
 
 
-
-function authenticateToken(req, res, next){
-  // const authHeader = req.headers['authorization'];
-  // const token = authHeader && authHeader.split(' ')[1];
-  // if (token == undefined) return res.sendStatus(401);
+function checkToken(req, res, next) {
   const accessToken = req.cookies.accessToken;
-  const refreshToken = req.cookies.refreshToken;
-  console.log(accessToken)
-  
+  // const refreshToken = req.cookies.refreshToken;
+  const userInfo = {userName: req.body.userName}
+
   jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403)
+    if (err) {
+      // Access token is expired or invalid
+      const refreshToken = req.cookies.refreshToken;
+      console.log("het time")
+      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, refreshedUser) => {
+        if (err || !refreshTokenDatabase.find(token => refreshToken == token)) {
+          console.log("khong co trong database")
+          return res.sendStatus(403);
+        }
+
+        const newAccessToken = generateAccessToken(userInfo);
+        res.cookie('accessToken', newAccessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+        req.user = refreshedUser;
+        next();
+      });
+    } else {
+      // Access token is valid
+      req.user = user;
+      next();
+    }
+  });
+}
+
+function generateAccessToken(user) {
+  try {
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
+  } catch (error) {
+    console.error("Error generating access token:", error);
+    throw error;
+  }
+}
+
+function checkRefreshToken(req, res, next) {
+  const refreshToken = req.cookies.refreshToken;
+
+  jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+    if (err) {
+      return res.sendStatus(403);
+    }
     req.user = user;
     next();
-  })
-}
-
-function authenticateRefreshToken(req, res, next){
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (token == undefined) return res.sendStatus(401);
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403)
-    req.user = user;
-    next();
-  })
-}
-
-function generateAccessToken(user){
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: `${timeToAlive}s`});
+  });
 }
 
 
-function generateRefreshToken(user){
-  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '30m'});
+function generateRefreshToken(user) {
+  const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: `${aliveTimeRefreshToken}m` });
   refreshTokenDatabase.push(refreshToken);
   return refreshToken;
-
 }
 const PORT = process.env.PORT || 3001;
 
