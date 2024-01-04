@@ -17,7 +17,6 @@ const aliveTimeRefreshToken = 30;
 const employeesLoginInfor = [
   {userName: "admin", password: "admin"}
 ]
-// const { dayToMilisecond, hourToMilisecond, minToMilisecond, secondToMilisecond } = require('./milisecondGenerator.js');
 
 function dayToMilisecond(day){
   return day * 24 * 60 * 60 * 1000;
@@ -171,6 +170,8 @@ app.post('/api/logout', (req, res) => {
   if (refreshToken){
     console.log("found");
     refreshTokenDatabase = refreshTokenDatabase.filter(token => refreshToken !== token);
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
   }
   res.send(JSON.stringify({
     success: true,
