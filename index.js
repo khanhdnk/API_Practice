@@ -6,8 +6,8 @@ const jwt = require('jsonwebtoken')
 const app = express();
 const cookieParser = require('cookie-parser');
 app.use(express.json());
-// app.use(cors());
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+// app.use(cors({origin: "*"}));
+app.use(cors({origin: ['http://192.168.1.117:3000', 'http://localhost:3000'],credentials: true }));
 
 
 app.use(cookieParser());
@@ -150,7 +150,7 @@ app.post('/api/login', (req,res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: minToMilisecond(30), sameSite: 'None', secure: true });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: minToMilisecond(0.1), sameSite: 'None', secure: true });
     res.send(JSON.stringify({
       success: true,
       notice: "login successfully",
@@ -164,14 +164,16 @@ app.post('/api/login', (req,res) => {
 })
 
 app.post('/api/logout', (req, res) => {
+  const accessToken = req.cookies.accessToken
   const refreshToken = req.cookies.refreshToken;
-  console.log(refreshToken)
-  console.log(refreshTokenDatabase)
+  console.log(accessToken + "\n" + refreshToken)
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  res.cookie('accessToken', '', { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+  res.cookie('refreshToken', '', { httpOnly: true, maxAge: minToMilisecond(0.1), sameSite: 'None', secure: true });
   if (refreshToken){
     console.log("found");
     refreshTokenDatabase = refreshTokenDatabase.filter(token => refreshToken !== token);
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
   }
   res.send(JSON.stringify({
     success: true,
