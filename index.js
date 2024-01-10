@@ -125,7 +125,8 @@ app.put('/api/employees/edit/:id',  (req, res) => {
 app.delete('/api/employees/delete/:id', (req, res) => {
   
 
-  const theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
+  const
+   theEmployee = employees.find(employee => employee.id === parseInt(req.params.id));
   if (!theEmployee){
     res.status(404).send("Not exist");
     return;
@@ -150,7 +151,7 @@ app.post('/api/login', (req,res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: minToMilisecond(0.1), sameSite: 'None', secure: true });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: minToMilisecond(15), sameSite: 'None', secure: true });
     res.send(JSON.stringify({
       success: true,
       notice: "login successfully",
@@ -170,7 +171,7 @@ app.post('/api/logout', (req, res) => {
   res.clearCookie('accessToken');
   res.clearCookie('refreshToken');
   res.cookie('accessToken', '', { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
-  res.cookie('refreshToken', '', { httpOnly: true, maxAge: minToMilisecond(0.1), sameSite: 'None', secure: true });
+  res.cookie('refreshToken', '', { httpOnly: true, maxAge: minToMilisecond(15), sameSite: 'None', secure: true });
   if (refreshToken){
     console.log("found");
     refreshTokenDatabase = refreshTokenDatabase.filter(token => refreshToken !== token);
