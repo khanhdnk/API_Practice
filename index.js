@@ -185,7 +185,6 @@ app.post('/api/logout', (req, res) => {
 
 
 app.post('/api/checkToken', checkToken, (req, res) => {
-
   res.send(JSON.stringify({
     success: true,
     notice: "Legit access token"
@@ -238,6 +237,8 @@ console.log("hello world no helloword 2");
 
 
 function checkToken(req, res, next) {
+  console.log("there is a response that is comming");
+
   const accessToken = req.cookies.accessToken;
   // const refreshToken = req.cookies.refreshToken;
   const userInfo = {userName: req.body.userName}
