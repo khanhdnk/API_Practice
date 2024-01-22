@@ -240,6 +240,7 @@ function checkToken(req, res, next) {
   console.log("there is a response that is comming");
 
   const accessToken = req.cookies.accessToken;
+  console.log(accessToken);
   // const refreshToken = req.cookies.refreshToken;
   const userInfo = {userName: req.body.userName}
 
@@ -247,10 +248,8 @@ function checkToken(req, res, next) {
     if (err) {
       // Access token is expired or invalid
       const refreshToken = req.cookies.refreshToken;
-      console.log("het time")
       jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, refreshedUser) => {
         if (err || !refreshTokenDatabase.find(token => refreshToken == token)) {
-          console.log("khong co trong database")
           return res.sendStatus(403);
         }
 
