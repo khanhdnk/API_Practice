@@ -184,12 +184,13 @@ app.post('/api/logout', (req, res) => {
 })
 
 
-app.post('/api/checkToken', checkToken, (req, res) => {
+app.post('/api/checkToken', middleWare, (req, res) => {
   res.send(JSON.stringify({
     success: true,
     notice: "Legit access token"
   }))
 })
+
 
 app.post('/api/checkRefreshToken', (req, res) => {
 
@@ -239,7 +240,8 @@ console.log("hello world no helloword 2");
 function checkToken(req, res, next) {
   console.log("there is a response that is comming");
 
-  const accessToken = req.cookies.accessToken;
+  // const accessToken = req.cookies.accessToken;
+  const accessToken = req.headers.authorization;
   console.log(accessToken);
   // const refreshToken = req.cookies.refreshToken;
   const userInfo = {userName: req.body.userName}
@@ -265,6 +267,40 @@ function checkToken(req, res, next) {
     }
   });
 }
+
+
+function middleWare(req, res, next) {
+  console.log("there is a response that is comming");
+
+  // const accessToken = req.cookies.accessToken;
+  const accessToken = req.body.accesstoken;
+  console.log(accessToken);
+  // const refreshToken = req.cookies.refreshToken;
+  const userInfo = {userName: req.body.userName}
+
+  jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) {
+      // Access token is expired or invalid
+      const refreshToken = req.cookies.refreshToken;
+      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, refreshedUser) => {
+        if (err || !refreshTokenDatabase.find(token => refreshToken == token)) {
+          return res.sendStatus(403);
+        }
+
+        const newAccessToken = generateAccessToken(userInfo);
+        res.cookie('accessToken', newAccessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+        req.user = refreshedUser;
+        next();
+      });
+    } else {
+      // Access token is valid
+      req.user = user;
+      next();
+    }
+  });
+}
+
+
 
 function generateAccessToken(user) {
   try {
