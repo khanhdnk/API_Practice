@@ -150,7 +150,7 @@ app.post('/api/login', (req,res) => {
     const user = {name: userName};
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+    res.cookie('accessToken', accessToken, { httpOnly: true, maxAge: minToMilisecond(timeToAlive), sameSite: 'None', secure: true });
     res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: minToMilisecond(15), sameSite: 'None', secure: true });
     res.send(JSON.stringify({
       success: true,
@@ -170,7 +170,7 @@ app.post('/api/logout', (req, res) => {
   console.log(accessToken + "\n" + refreshToken)
   res.clearCookie('accessToken');
   res.clearCookie('refreshToken');
-  res.cookie('accessToken', '', { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+  res.cookie('accessToken', '', { httpOnly: true, maxAge: minToMilisecond(timeToAlive), sameSite: 'None', secure: true });
   res.cookie('refreshToken', '', { httpOnly: true, maxAge: minToMilisecond(15), sameSite: 'None', secure: true });
   if (refreshToken){
     console.log("found");
@@ -184,7 +184,7 @@ app.post('/api/logout', (req, res) => {
 })
 
 
-app.post('/api/checkToken', middleWare, (req, res) => {
+app.post('/api/checkToken', checkToken, (req, res) => {
   res.send(JSON.stringify({
     success: true,
     notice: "Legit access token"
@@ -240,8 +240,7 @@ console.log("hello world no helloword 2");
 function checkToken(req, res, next) {
   console.log("there is a response that is comming");
 
-  // const accessToken = req.cookies.accessToken;
-  const accessToken = req.headers.authorization;
+  const accessToken = req.cookies.accessToken;
   console.log(accessToken);
   // const refreshToken = req.cookies.refreshToken;
   const userInfo = {userName: req.body.userName}
@@ -256,7 +255,7 @@ function checkToken(req, res, next) {
         }
 
         const newAccessToken = generateAccessToken(userInfo);
-        res.cookie('accessToken', newAccessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+        res.cookie('accessToken', newAccessToken, { httpOnly: true, maxAge: minToMilisecond(timeToAlive), sameSite: 'None', secure: true });
         req.user = refreshedUser;
         next();
       });
@@ -274,7 +273,7 @@ function middleWare(req, res, next) {
 
   // const accessToken = req.cookies.accessToken;
   const accessToken = req.body.accesstoken;
-  console.log(accessToken);
+  console.log("hello");
   // const refreshToken = req.cookies.refreshToken;
   const userInfo = {userName: req.body.userName}
 
@@ -288,7 +287,7 @@ function middleWare(req, res, next) {
         }
 
         const newAccessToken = generateAccessToken(userInfo);
-        res.cookie('accessToken', newAccessToken, { httpOnly: true, maxAge: secondToMilisecond(timeToAlive), sameSite: 'None', secure: true });
+        res.cookie('accessToken', newAccessToken, { httpOnly: true, maxAge: minToMilisecond(timeToAlive), sameSite: 'None', secure: true });
         req.user = refreshedUser;
         next();
       });
@@ -304,7 +303,7 @@ function middleWare(req, res, next) {
 
 function generateAccessToken(user) {
   try {
-    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' });
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
   } catch (error) {
     console.error("Error generating access token:", error);
     throw error;
