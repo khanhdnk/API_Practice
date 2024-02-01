@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { json } = require('body-parser');
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
 const app = express();
@@ -53,6 +54,11 @@ let employees = [
 ]
 
 let refreshTokenDatabase = [];
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build/index.html'));
+
+});
 
 //get all employees
 app.get('/api/employees', checkToken,(req, res) => {
