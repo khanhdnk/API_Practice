@@ -5,6 +5,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken')
 const app = express();
 const cookieParser = require('cookie-parser');
+const { Client } = require('pg');
 app.use(express.json());
 // app.use(cors({origin: "*"}));
 app.use(cors({origin: ['http://192.168.1.117:3000', 'http://localhost:3000'],credentials: true }));
@@ -292,6 +293,26 @@ function generateRefreshToken(user) {
   refreshTokenDatabase.push(refreshToken);
   return refreshToken;
 }
+
+const client = new Client({
+  host: 'cos30049.cnmmc8wmy9ar.us-east-1.rds.amazonaws.com',
+  user: 'superuser',
+  port: 5432,
+  password: '1234rewqasdF',
+  database: 'cos30049'
+})
+
+client.connect();
+client.query('SELECT * FROM users', (err,res) =>{
+  if (!err){
+      console.log(res.rows);
+
+  }else {
+      console.log(err.message);
+  }
+  client.end();
+})
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
